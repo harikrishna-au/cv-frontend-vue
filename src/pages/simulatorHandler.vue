@@ -1,4 +1,13 @@
 <template>
+    <template v-if="sessionExpired">
+        <div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);z-index:9999;">
+            <div style="background:#fff;padding:2rem;border-radius:8px;text-align:center;max-width:400px;">
+                <h2>Session Expired</h2>
+                <p>Your session has expired. Please log in again.</p>
+                <p style="color:#888;font-size:0.875rem;">Redirecting to login...</p>
+            </div>
+        </div>
+    </template>
     <template v-if="isLoading">
         <h1>Loading...</h1>
     </template>
@@ -27,6 +36,7 @@ import { useSimulatorMobileStore } from '#/store/simulatorMobileStore'
 const route = useRoute()
 const hasAccess = ref(true)
 const isLoading = ref(true)
+const sessionExpired = ref(false)
 const authStore = useAuthStore()
 const simulatorMobileStore = useSimulatorMobileStore()
 
@@ -55,6 +65,7 @@ async function checkEditAccess() {
             isLoading.value = false
         } else if (res.status === 401) {
             // if user is not logged in redirect to login page
+            authStore.signOut()
             window.location.href = '/users/sign_in'
         }
     })
@@ -77,6 +88,8 @@ async function getLoginData() {
         } else if (response.status === 401) {
             ;(window as any).isUserLoggedIn = false
             authStore.signOut()
+            sessionExpired.value = true
+            setTimeout(() => { window.location.href = '/users/sign_in' }, 3000)
         }
     } catch (err) {
         console.error(err)
